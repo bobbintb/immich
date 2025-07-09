@@ -13,7 +13,7 @@ USER node
 WORKDIR /usr/src/app
 COPY --chown=node:node ./web ./web/
 COPY --chown=node:node ./open-api ./open-api/
-COPY --chown=node:node ./Makefile ./package* ./pnpm* ./
+COPY --chown=node:node ./Makefile ./package* ./pnpm* .pnpmfile.cjs ./
 
 RUN umask 000 && \
   find /usr/src/app -type d -exec chmod o+rwx {} \; && \

@@ -6,7 +6,7 @@ ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0 \
 
 WORKDIR /usr/src/app
 COPY ./server/package* ./server/
-COPY Makefile ./package* ./pnpm* ./
+COPY Makefile ./package* ./pnpm* .pnpmfile.cjs ./
 
 RUN echo "umask 000" >> /etc/profile && \
   echo "umask 000" >> /etc/bash.bashrc && \
