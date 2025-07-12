@@ -2,12 +2,17 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:immich_mobile/extensions/asyncvalue_extensions.dart';
-import 'package:immich_mobile/presentation/widgets/map/utils.dart';
+import 'package:immich_mobile/extensions/build_context_extensions.dart';
+import 'package:immich_mobile/extensions/translate_extensions.dart';
+import 'package:immich_mobile/presentation/widgets/bottom_sheet/map_bottom_sheet.widget.dart';
+import 'package:immich_mobile/presentation/widgets/map/map_utils.dart';
 import 'package:immich_mobile/presentation/widgets/map/map.state.dart';
+import 'package:immich_mobile/widgets/common/immich_toast.dart';
 import 'package:immich_mobile/widgets/map/map_theme_override.dart';
-import 'package:logging/logging.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class DriftMapWithMarker extends ConsumerStatefulWidget {
@@ -19,6 +24,7 @@ class DriftMapWithMarker extends ConsumerStatefulWidget {
 
 class _DriftMapWithMarkerState extends ConsumerState<DriftMapWithMarker> {
   MapLibreMapController? mapController;
+  static const mapZoomToAssetLevel = 12.0;
 
   @override
   void initState() {
@@ -27,7 +33,6 @@ class _DriftMapWithMarkerState extends ConsumerState<DriftMapWithMarker> {
 
   @override
   void dispose() {
-    mapController?.dispose();
     super.dispose();
   }
 
@@ -95,6 +100,32 @@ class _DriftMapWithMarkerState extends ConsumerState<DriftMapWithMarker> {
     MapUtils.completer.complete();
   }
 
+  Future<void> onZoomToLocation() async {
+    final (location, error) =
+        await MapUtils.checkPermAndGetLocation(context: context);
+    if (error != null) {
+      if (error == LocationPermission.unableToDetermine && context.mounted) {
+        ImmichToast.show(
+          context: context,
+          gravity: ToastGravity.BOTTOM,
+          toastType: ToastType.error,
+          msg: "map_cannot_get_user_location".t(context: context),
+        );
+      }
+      return;
+    }
+
+    if (mapController != null && location != null) {
+      mapController!.animateCamera(
+        CameraUpdate.newLatLngZoom(
+          LatLng(location.latitude, location.longitude),
+          mapZoomToAssetLevel,
+        ),
+        duration: const Duration(milliseconds: 800),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Stack(
@@ -103,6 +134,7 @@ class _DriftMapWithMarkerState extends ConsumerState<DriftMapWithMarker> {
           onMapCreated: onMapCreated,
           onMapMoved: onMapMoved,
         ),
+        _MyLocationButton(onZoomToLocation: onZoomToLocation),
         _Markers(
           reloadMarkers: reloadMarkers,
         ),
@@ -146,22 +178,42 @@ class _Markers extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // This logger is only for debug
-    final logger = Logger("marker");
-
     final initBounds = ref.watch(mapStateProvider.select((s) => s.bounds));
-    AsyncValue<Map<String, dynamic>> asyncMarkers = ref.watch(mapMarkerProvider(initBounds));
+    AsyncValue<Map<String, dynamic>> markers = ref.watch(mapMarkerProvider(initBounds));
+    AsyncValue<List<String>> assetIds = ref.watch(mapAssetsProvider(initBounds));
 
     ref.listen(mapStateProvider, (previous, next) async {
-      asyncMarkers = ref.watch(mapMarkerProvider(next.bounds));
+      markers = ref.watch(mapMarkerProvider(next.bounds));
+      assetIds = ref.watch(mapAssetsProvider(next.bounds));
     });
 
-    return asyncMarkers.widgetWhen(
-      onData: (markers) {
-        logger.log(Level.INFO, markers);
-        reloadMarkers(markers);
-        return const SizedBox.shrink();
+    markers.whenData((markers) => reloadMarkers(markers));
+
+    return assetIds.widgetWhen(
+      onData: (assetIds) {
+        return MapBottomSheet(assetIds: assetIds);
       },
+    );
+  }
+}
+
+class _MyLocationButton extends StatelessWidget {
+  const _MyLocationButton({required this.onZoomToLocation});
+
+  final VoidCallback onZoomToLocation;
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      right: 0,
+      bottom: context.padding.bottom + 16,
+      child: ElevatedButton(
+        onPressed: onZoomToLocation,
+        style: ElevatedButton.styleFrom(
+          shape: const CircleBorder(),
+        ),
+        child: const Icon(Icons.my_location),
+      ),
     );
   }
 }
