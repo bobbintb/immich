@@ -9,11 +9,11 @@ RUN npm ci && \
   # they're marked as optional dependencies, so we need to copy them manually after pruning
   rm -rf node_modules/@img/sharp-libvips* && \
   rm -rf node_modules/@img/sharp-linuxmusl-x64
-ENV PATH="${PATH}:/usr/src/app/bin" \
+ENV PATH="${PATH}:/usr/src/app/server/bin:/usr/src/app/server" \
   IMMICH_ENV=development \
   NVIDIA_DRIVER_CAPABILITIES=all \
   NVIDIA_VISIBLE_DEVICES=all
-ENTRYPOINT ["tini", "--", "/bin/sh"]
+ENTRYPOINT ["tini", "--", "/bin/bash", "-c"]
 
 FROM dev AS dev-container-server
 
@@ -98,22 +98,21 @@ RUN npm ci && npm run build
 # prod build
 FROM ghcr.io/immich-app/base-server-prod:202507091427@sha256:ad10451acd8eda05a006a2586b6b0425cdaaca97c413fb4c1a10896712528bdc
 
-WORKDIR /usr/src/app/server
+WORKDIR /usr/src/app
 ENV NODE_ENV=production \
   NVIDIA_DRIVER_CAPABILITIES=all \
   NVIDIA_VISIBLE_DEVICES=all
-COPY --from=prod /usr/src/app/server/node_modules ./node_modules
-COPY --from=prod /usr/src/app/server/dist ./dist
-COPY --from=prod /usr/src/app/server/bin ./bin
+COPY --from=prod /usr/src/app/server/bin ./server/bin
+COPY --from=prod /usr/src/app/server/dist ./server/dist
+COPY --from=prod /usr/src/app/server/node_modules ./server/node_modules
+COPY --from=prod /usr/src/app/server/resources ./server
+COPY --from=prod /usr/src/app/server/start.sh /usr/src/app/server/package.json  ./server/
 COPY --from=web /usr/src/app/web/build /build/www
-COPY ./server/resources resources
-COPY ./server/package.json server/package-lock.json ./
-COPY ./server/start*.sh ./
-COPY "docker/scripts/get-cpus.sh" ./
+COPY "docker/scripts/get-cpus.sh" ./server/
 RUN npm install -g @immich/cli && npm cache clean --force
 COPY LICENSE /licenses/LICENSE.txt
 COPY LICENSE /LICENSE
-ENV PATH="${PATH}:/usr/src/app/bin"
+ENV PATH="${PATH}:/usr/src/app/server/bin:/usr/src/app/server"
 
 ARG BUILD_ID
 ARG BUILD_IMAGE
@@ -132,7 +131,7 @@ ENV IMMICH_SOURCE_URL=https://github.com/immich-app/immich/commit/${BUILD_SOURCE
 
 VOLUME /usr/src/app/upload
 EXPOSE 2283
-ENTRYPOINT ["tini", "--", "/bin/bash"]
+ENTRYPOINT ["tini", "--", "/bin/bash", "-c"]
 CMD ["start.sh"]
 
 HEALTHCHECK CMD immich-healthcheck

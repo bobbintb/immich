@@ -16,7 +16,7 @@ name: immich-dev
 services:
   immich-server:
     container_name: immich_server
-    command: ['/usr/src/app/server/bin/immich-dev']
+    command: ['immich-dev']
     image: immich-server-dev:latest
     # extends:
     #   file: hwaccel.transcoding.yml
@@ -71,7 +71,7 @@ services:
     build:
       context: ../
       dockerfile: web/Dockerfile
-    command: ['/usr/src/app/web/bin/immich-web']
+    command: ['immich-web']
     env_file:
       - .env
     ports:

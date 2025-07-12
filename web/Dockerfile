@@ -7,7 +7,8 @@ WORKDIR /usr/src/app/web
 COPY --chown=node:node ./web/package* ./
 RUN npm ci
 
-ENV CHOKIDAR_USEPOLLING=true
+ENV CHOKIDAR_USEPOLLING=true \
+  PATH="${PATH}:/usr/src/app/web/bin"
 EXPOSE 24678
 EXPOSE 3000
-ENTRYPOINT ["/sbin/tini", "--", "/bin/sh"]
+ENTRYPOINT ["/sbin/tini", "--", "/bin/sh", "-c"]
