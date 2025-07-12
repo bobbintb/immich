@@ -3,8 +3,8 @@ FROM node:22.16.0-alpine3.20@sha256:2289fb1fba0f4633b08ec47b94a89c7e20b829fc5679
 RUN apk add --no-cache tini make
 
 USER node
-WORKDIR /usr/src/app
-COPY --chown=node:node package*.json ./
+WORKDIR /usr/src/app/web
+COPY --chown=node:node ./web/package* ./
 RUN npm ci
 
 ENV CHOKIDAR_USEPOLLING=true
