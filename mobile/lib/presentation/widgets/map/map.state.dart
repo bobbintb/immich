@@ -52,16 +52,6 @@ final mapMarkerProvider = StreamProvider.family<Map<String, dynamic>, LatLngBoun
   dependencies: [mapServiceProvider],
 );
 
-final mapAssetsProvider = StreamProvider.family<List<String>, LatLngBounds>(
-  (ref, bounds) async* {
-    final mapService = ref.watch(mapServiceProvider);
-    yield* mapService.watchMarkers(bounds).map((markers) {
-      return markers.map((marker) => marker.assetId).toList();
-    });
-  },
-  dependencies: [mapServiceProvider],
-);
-
 final mapStateProvider =
     NotifierProvider<MapStateNotifier, MapState>(
   MapStateNotifier.new,

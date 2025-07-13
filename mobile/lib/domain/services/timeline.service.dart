@@ -10,6 +10,7 @@ import 'package:immich_mobile/domain/services/setting.service.dart';
 import 'package:immich_mobile/domain/utils/event_stream.dart';
 import 'package:immich_mobile/infrastructure/repositories/timeline.repository.dart';
 import 'package:immich_mobile/utils/async_mutex.dart';
+import 'package:maplibre_gl/maplibre_gl.dart';
 
 typedef TimelineAssetSource = Future<List<BaseAsset>> Function(
   int index,
@@ -63,8 +64,8 @@ class TimelineFactory {
   TimelineService video(String userId) =>
       TimelineService(_timelineRepository.video(userId, groupBy));
 
-  TimelineService map(List<String> assetIds) =>
-      TimelineService(_timelineRepository.map(assetIds, groupBy));
+  TimelineService map(LatLngBounds bounds) =>
+      TimelineService(_timelineRepository.map(bounds, groupBy));
 }
 
 class TimelineService {

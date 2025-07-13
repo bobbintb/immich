@@ -65,7 +65,7 @@ class DriftMapRepository extends DriftDatabaseRepository {
   }
 }
 
-extension on $RemoteExifEntityTable {
+extension MapBounds on $RemoteExifEntityTable {
   Expression<bool> inBounds(LatLngBounds bounds) {
     final isLatitudeInBounds = latitude.isBiggerOrEqualValue(bounds.southwest.latitude) &
         latitude.isSmallerOrEqualValue(bounds.northeast.latitude);

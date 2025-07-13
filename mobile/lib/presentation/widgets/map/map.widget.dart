@@ -13,6 +13,7 @@ import 'package:immich_mobile/presentation/widgets/map/map_utils.dart';
 import 'package:immich_mobile/presentation/widgets/map/map.state.dart';
 import 'package:immich_mobile/widgets/common/immich_toast.dart';
 import 'package:immich_mobile/widgets/map/map_theme_override.dart';
+import 'package:logging/logging.dart';
 import 'package:maplibre_gl/maplibre_gl.dart';
 
 class DriftMapWithMarker extends ConsumerStatefulWidget {
@@ -178,22 +179,16 @@ class _Markers extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final initBounds = ref.watch(mapStateProvider.select((s) => s.bounds));
-    AsyncValue<Map<String, dynamic>> markers = ref.watch(mapMarkerProvider(initBounds));
-    AsyncValue<List<String>> assetIds = ref.watch(mapAssetsProvider(initBounds));
+    final bounds = ref.watch(mapStateProvider.select((s) => s.bounds));
+    AsyncValue<Map<String, dynamic>> markers = ref.watch(mapMarkerProvider(bounds));
 
     ref.listen(mapStateProvider, (previous, next) async {
       markers = ref.watch(mapMarkerProvider(next.bounds));
-      assetIds = ref.watch(mapAssetsProvider(next.bounds));
     });
 
     markers.whenData((markers) => reloadMarkers(markers));
 
-    return assetIds.widgetWhen(
-      onData: (assetIds) {
-        return MapBottomSheet(assetIds: assetIds);
-      },
-    );
+    return const MapBottomSheet();
   }
 }
 
