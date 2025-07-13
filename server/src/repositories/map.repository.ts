@@ -241,13 +241,13 @@ export class MapRepository {
       await manager.schema.dropTable('geodata_places').execute();
       await manager.schema.alterTable('geodata_places_tmp').renameTo('geodata_places').execute();
     });
+    await this.loadCities500(admin1, admin2);
     await this.db.schema
       .createIndex('IDX_geodata_gist_earthcoord')
       .on('geodata_places')
       .using('gist')
       .expression(sql`ll_to_earth_public(latitude, longitude)`)
       .execute();
-    await this.loadCities500(admin1, admin2);
     await this.createGeodataIndices();
   }
 
@@ -257,6 +257,9 @@ export class MapRepository {
     if (!existsSync(cities500)) {
       throw new Error(`Geodata file ${cities500} not found`);
     }
+
+    this.logger.log(`Starting geodata import`);
+    const startTime = Date.now();
 
     const input = createReadStream(cities500, { highWaterMark: 512 * 1024 * 1024 });
     let bufferGeodata = [];
@@ -307,7 +310,21 @@ export class MapRepository {
       }
     }
 
-    await this.db.insertInto('geodata_places').values(bufferGeodata).execute();
+    if (bufferGeodata.length > 0) {
+      await this.db.insertInto('geodata_places').values(bufferGeodata).execute();
+      count += bufferGeodata.length;
+    }
+
+    // Wait for all pending inserts
+    await Promise.all(futures);
+
+    const duration = Date.now() - startTime;
+    const seconds = duration / 1000;
+    const recordsPerSecond = Math.round(count / seconds);
+
+    this.logger.log(
+      `Geodata import completed: ${count} records in ${seconds.toFixed(2)}s (${recordsPerSecond} records/sec)`,
+    );
   }
 
   private async loadAdmin(filePath: string) {
