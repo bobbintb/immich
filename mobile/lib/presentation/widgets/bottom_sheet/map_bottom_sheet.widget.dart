@@ -20,14 +20,12 @@ class MapBottomSheet extends ConsumerWidget {
     return ProviderScope(
       overrides: [
         // TODO: refactor (timeline): when ProviderScope changed, we should refresh timeline
-        timelineServiceProvider.overrideWith(
-          (ref) {
-            final timelineService =
-                ref.watch(timelineFactoryProvider).map(bounds);
-            ref.onDispose(timelineService.dispose);
-            return timelineService;
-          }
-        ),
+        timelineServiceProvider.overrideWith((ref) {
+          final timelineService =
+              ref.watch(timelineFactoryProvider).map(bounds);
+          ref.onDispose(timelineService.dispose);
+          return timelineService;
+        }),
       ],
       child: const BaseBottomSheet(
         initialChildSize: 0.25,

@@ -26,13 +26,15 @@ class DriftMapRepository extends DriftDatabaseRepository {
         _db.remoteExifEntity.latitude.isNotNull() &
             _db.remoteExifEntity.longitude.isNotNull() &
             _db.remoteExifEntity.inBounds(bounds) &
-            _db.remoteAssetEntity.visibility.equalsValue(AssetVisibility.timeline) &
+            _db.remoteAssetEntity.visibility
+                .equalsValue(AssetVisibility.timeline) &
             _db.remoteAssetEntity.deletedAt.isNull(),
       );
 
     return query
         .map((row) => row.readTable(_db.remoteExifEntity).toMarker())
-        .watch().throttle(const Duration(seconds: 3));
+        .watch()
+        .throttle(const Duration(seconds: 3));
   }
 
   Stream<List<Marker>> watchRemoteAlbumMarker(
@@ -61,23 +63,27 @@ class DriftMapRepository extends DriftDatabaseRepository {
 
     return query
         .map((row) => row.readTable(_db.remoteExifEntity).toMarker())
-        .watch().throttle(const Duration(seconds: 3));
+        .watch()
+        .throttle(const Duration(seconds: 3));
   }
 }
 
 extension MapBounds on $RemoteExifEntityTable {
   Expression<bool> inBounds(LatLngBounds bounds) {
-    final isLatitudeInBounds = latitude.isBiggerOrEqualValue(bounds.southwest.latitude) &
-        latitude.isSmallerOrEqualValue(bounds.northeast.latitude);
+    final isLatitudeInBounds =
+        latitude.isBiggerOrEqualValue(bounds.southwest.latitude) &
+            latitude.isSmallerOrEqualValue(bounds.northeast.latitude);
 
     final Expression<bool> isLongitudeInBounds;
 
     if (bounds.southwest.longitude <= bounds.northeast.longitude) {
-      isLongitudeInBounds = longitude.isBiggerOrEqualValue(bounds.southwest.longitude) &
-          longitude.isSmallerOrEqualValue(bounds.northeast.longitude);
+      isLongitudeInBounds =
+          longitude.isBiggerOrEqualValue(bounds.southwest.longitude) &
+              longitude.isSmallerOrEqualValue(bounds.northeast.longitude);
     } else {
-      isLongitudeInBounds = longitude.isBiggerOrEqualValue(bounds.southwest.longitude) |
-          longitude.isSmallerOrEqualValue(bounds.northeast.longitude);
+      isLongitudeInBounds =
+          longitude.isBiggerOrEqualValue(bounds.southwest.longitude) |
+              longitude.isSmallerOrEqualValue(bounds.northeast.longitude);
     }
 
     return isLatitudeInBounds & isLongitudeInBounds;

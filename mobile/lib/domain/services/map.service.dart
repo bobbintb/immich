@@ -9,14 +9,16 @@ class MapFactory {
 
   const MapFactory({
     required DriftMapRepository mapRepository,
-  })  : _mapRepository = mapRepository;
+  }) : _mapRepository = mapRepository;
 
   MapService main(List<String> timelineUsers) => MapService(
-        markerSource: (bounds) => _mapRepository.watchMainMarker(timelineUsers, bounds: bounds),
+        markerSource: (bounds) =>
+            _mapRepository.watchMainMarker(timelineUsers, bounds: bounds),
       );
 
   MapService remoteAlbum({required String albumId}) => MapService(
-        markerSource: (bounds) => _mapRepository.watchRemoteAlbumMarker(albumId, bounds: bounds),
+        markerSource: (bounds) =>
+            _mapRepository.watchRemoteAlbumMarker(albumId, bounds: bounds),
       );
 }
 
@@ -25,9 +27,10 @@ class MapService {
 
   MapService({
     required MapMarkerSource markerSource,
-  })  : _markerSource = markerSource;
+  }) : _markerSource = markerSource;
 
-  Stream<List<Marker>> Function(LatLngBounds bounds) get watchMarkers => _markerSource;
+  Stream<List<Marker>> Function(LatLngBounds bounds) get watchMarkers =>
+      _markerSource;
 
   Future<void> dispose() async {}
 }

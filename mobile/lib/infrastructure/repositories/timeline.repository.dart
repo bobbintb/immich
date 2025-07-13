@@ -343,7 +343,8 @@ class DriftTimelineRepository extends DriftDatabaseRepository {
         _db.remoteExifEntity.latitude.isNotNull() &
             _db.remoteExifEntity.longitude.isNotNull() &
             _db.remoteExifEntity.inBounds(bounds) &
-            _db.remoteAssetEntity.visibility.equalsValue(AssetVisibility.timeline) &
+            _db.remoteAssetEntity.visibility
+                .equalsValue(AssetVisibility.timeline) &
             _db.remoteAssetEntity.deletedAt.isNull(),
       )
       ..groupBy([dateExp])
@@ -374,7 +375,8 @@ class DriftTimelineRepository extends DriftDatabaseRepository {
         _db.remoteExifEntity.latitude.isNotNull() &
             _db.remoteExifEntity.longitude.isNotNull() &
             _db.remoteExifEntity.inBounds(bounds) &
-            _db.remoteAssetEntity.visibility.equalsValue(AssetVisibility.timeline) &
+            _db.remoteAssetEntity.visibility
+                .equalsValue(AssetVisibility.timeline) &
             _db.remoteAssetEntity.deletedAt.isNull(),
       )
       ..orderBy([OrderingTerm.desc(_db.remoteAssetEntity.createdAt)])

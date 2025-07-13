@@ -30,17 +30,18 @@ class MapStateNotifier extends Notifier<MapState> {
 
   @override
   MapState build() => MapState(
-    // TODO: set default bounds
-    bounds: LatLngBounds(
-      northeast: const LatLng(0, 0),
-      southwest: const LatLng(0, 0),
-    ),
-  );
+        // TODO: set default bounds
+        bounds: LatLngBounds(
+          northeast: const LatLng(0, 0),
+          southwest: const LatLng(0, 0),
+        ),
+      );
 }
 
 // This provider watches the markers from the map service and serves the markers.
 // It should be used only after the map service provider is overridden
-final mapMarkerProvider = StreamProvider.family<Map<String, dynamic>, LatLngBounds>(
+final mapMarkerProvider =
+    StreamProvider.family<Map<String, dynamic>, LatLngBounds>(
   (ref, bounds) async* {
     final mapService = ref.watch(mapServiceProvider);
     yield* mapService.watchMarkers(bounds).map((markers) {
@@ -52,7 +53,6 @@ final mapMarkerProvider = StreamProvider.family<Map<String, dynamic>, LatLngBoun
   dependencies: [mapServiceProvider],
 );
 
-final mapStateProvider =
-    NotifierProvider<MapStateNotifier, MapState>(
+final mapStateProvider = NotifierProvider<MapStateNotifier, MapState>(
   MapStateNotifier.new,
 );

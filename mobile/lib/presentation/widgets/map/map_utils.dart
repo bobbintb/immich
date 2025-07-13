@@ -33,17 +33,24 @@ class MapUtils {
       "rgb(255,86,34)",
     ],
     heatmapIntensity: [
-      Expressions.interpolate, ["linear"],
+      Expressions.interpolate,
+      ["linear"],
       [Expressions.zoom],
-      0, 0.5,
-      9, 2,
+      0,
+      0.5,
+      9,
+      2,
     ],
     heatmapRadius: [
-      Expressions.interpolate, ["linear"],
+      Expressions.interpolate,
+      ["linear"],
       [Expressions.zoom],
-      0, 4,
-      4, 8,
-      9, 16,
+      0,
+      4,
+      4,
+      8,
+      9,
+      16,
     ],
     heatmapOpacity: 0.7,
   );
@@ -102,16 +109,16 @@ class MapUtils {
 }
 
 class _LocationServiceDisabledDialog extends ConfirmDialog {
-_LocationServiceDisabledDialog(BuildContext context)
-    : super(
-        title: 'map_location_service_disabled_title'.t(context: context),
-        content: 'map_location_service_disabled_content'.t(context: context),
-        cancel: 'cancel'.t(context: context),
-        ok: 'yes'.t(context: context),
-        onOk: () async {
-          await Geolocator.openLocationSettings();
-        },
-      );
+  _LocationServiceDisabledDialog(BuildContext context)
+      : super(
+          title: 'map_location_service_disabled_title'.t(context: context),
+          content: 'map_location_service_disabled_content'.t(context: context),
+          cancel: 'cancel'.t(context: context),
+          ok: 'yes'.t(context: context),
+          onOk: () async {
+            await Geolocator.openLocationSettings();
+          },
+        );
 }
 
 class _LocationPermissionDisabledDialog extends ConfirmDialog {

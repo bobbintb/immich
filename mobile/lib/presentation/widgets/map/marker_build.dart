@@ -5,8 +5,7 @@ class MarkerBuilder {
 
   const MarkerBuilder({required this.markers});
 
-  static Map<String, dynamic> addFeature(Marker marker) =>
-      {
+  static Map<String, dynamic> addFeature(Marker marker) => {
         'type': 'Feature',
         'id': marker.assetId,
         'geometry': {
@@ -15,8 +14,7 @@ class MarkerBuilder {
         },
       };
 
-  Map<String, dynamic> generate() =>
-      {
+  Map<String, dynamic> generate() => {
         'type': 'FeatureCollection',
         'features': markers.map(addFeature).toList(),
       };
