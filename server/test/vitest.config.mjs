@@ -7,9 +7,9 @@ process.env.TZ = 'UTC';
 
 export default defineConfig({
   test: {
-    root: './',
+    root: '/app/server',
     globals: true,
-    include: ['src/**/*.spec.ts'],
+    include: ['src/**/*.spec.ts', 'test/**/*.e2e-spec.ts'],
     coverage: {
       provider: 'v8',
       include: ['src/cores/**', 'src/services/**', 'src/utils/**', 'src/sql-tools/**'],

@@ -5,6 +5,7 @@ import { transformException } from '@nestjs/platform-express/multer/multer/multe
 import { NextFunction, RequestHandler } from 'express';
 import multer, { StorageEngine, diskStorage } from 'multer';
 import { createHash, randomUUID } from 'node:crypto';
+import { createWriteStream, existsSync, mkdirSync, renameSync } from 'node:fs';
 import { Observable } from 'rxjs';
 import { UploadFieldName } from 'src/dtos/asset-media.dto';
 import { RouteKey } from 'src/enum';
@@ -126,16 +127,58 @@ export class FileUploadInterceptor implements NestInterceptor {
       return;
     }
 
-    const hash = createHash('sha1');
-    file.stream.on('data', (chunk) => hash.update(chunk));
-    this.defaultStorage._handleFile(request, file, (error, info) => {
-      if (error) {
-        hash.destroy();
-        callback(error);
-      } else {
-        callback(null, { ...info, checksum: hash.digest() });
+    const contentRange = request.headers['content-range'];
+    if (contentRange) {
+      const [range, total] = contentRange.split(' ')[1].split('/');
+      const [start, end] = range.split('-').map(Number);
+
+      const destination = this.assetService.getUploadFolder(asRequest(request, file));
+      const filename = this.assetService.getUploadFilename(asRequest(request, file));
+      const tempPath = `${destination}/temp`;
+      if (!existsSync(tempPath)) {
+        mkdirSync(tempPath, { recursive: true });
       }
-    });
+
+      const tempFilePath = `${tempPath}/${filename}`;
+      const writeStream = createWriteStream(tempFilePath, { flags: 'a', start });
+
+      file.stream.pipe(writeStream);
+
+      writeStream.on('finish', () => {
+        if (end + 1 >= Number(total)) {
+          // All chunks received, move file to final destination
+          const finalPath = `${destination}/${filename}`;
+          renameSync(tempFilePath, finalPath);
+          const hash = createHash('sha1');
+          file.stream.on('data', (chunk) => hash.update(chunk));
+          this.defaultStorage._handleFile(request, file, (error, info) => {
+            if (error) {
+              hash.destroy();
+              callback(error);
+            } else {
+              callback(null, { ...info, checksum: hash.digest(), path: finalPath });
+            }
+          });
+        } else {
+          callback(null, {});
+        }
+      });
+
+      writeStream.on('error', (error) => {
+        callback(error);
+      });
+    } else {
+      const hash = createHash('sha1');
+      file.stream.on('data', (chunk) => hash.update(chunk));
+      this.defaultStorage._handleFile(request, file, (error, info) => {
+        if (error) {
+          hash.destroy();
+          callback(error);
+        } else {
+          callback(null, { ...info, checksum: hash.digest() });
+        }
+      });
+    }
   }
 
   private removeFile(request: AuthRequest, file: Express.Multer.File, callback: (error: Error | null) => void) {

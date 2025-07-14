@@ -42,12 +42,67 @@ class UploadService {
   }
 
   Future<void> upload(File file) async {
-    final task = await _buildUploadTask(
-      hash(file.path).toString(),
-      file,
-    );
+    const chunkSize = 1024 * 1024 * 10; // 10MB
+    final fileSize = await file.length();
+    final chunks = (fileSize / chunkSize).ceil();
 
-    await _uploadRepository.upload(task);
+    for (var i = 0; i < chunks; i++) {
+      final start = i * chunkSize;
+      final end = (start + chunkSize > fileSize) ? fileSize : start + chunkSize;
+      final task = await _buildChunkedUploadTask(
+        hash(file.path).toString(),
+        file,
+        start,
+        end,
+        fileSize,
+      );
+      await _uploadRepository.upload(task);
+    }
+  }
+
+  Future<UploadTask> _buildChunkedUploadTask(
+    String id,
+    File file,
+    int start,
+    int end,
+    int totalSize,
+  ) async {
+    final serverEndpoint = Store.get(StoreKey.serverEndpoint);
+    final url = Uri.parse('$serverEndpoint/assets').toString();
+    final headers = ApiService.getRequestHeaders();
+    final deviceId = Store.get(StoreKey.deviceId);
+
+    final (baseDirectory, directory, filename) =
+        await Task.split(filePath: file.path);
+    final stats = await file.stat();
+    final fileCreatedAt = stats.changed;
+    final fileModifiedAt = stats.modified;
+
+    final fieldsMap = {
+      'filename': filename,
+      'deviceAssetId': id,
+      'deviceId': deviceId,
+      'fileCreatedAt': fileCreatedAt.toUtc().toIso8601String(),
+      'fileModifiedAt': fileModifiedAt.toUtc().toIso8601String(),
+      'isFavorite': 'false',
+      'duration': '0',
+    };
+
+    headers['Content-Range'] = 'bytes $start-${end - 1}/$totalSize';
+
+    return UploadTask(
+      taskId: '$id-$start',
+      httpRequestMethod: 'POST',
+      url: url,
+      headers: headers,
+      filename: filename,
+      fields: fieldsMap,
+      baseDirectory: baseDirectory,
+      directory: directory,
+      fileField: 'assetData',
+      group: uploadGroup,
+      updates: Updates.statusAndProgress,
+    );
   }
 
   Future<UploadTask> _buildUploadTask(
