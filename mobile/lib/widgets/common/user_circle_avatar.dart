@@ -14,11 +14,15 @@ class UserCircleAvatar extends ConsumerWidget {
   final UserDto user;
   double radius;
   double size;
+  bool hasBorder;
+  bool hasShadow;
 
   UserCircleAvatar({
     super.key,
     this.radius = 22,
     this.size = 44,
+    this.hasBorder = false,
+    this.hasShadow = false,
     required this.user,
   });
 
@@ -38,25 +42,48 @@ class UserCircleAvatar extends ConsumerWidget {
       ),
       child: Text(user.name[0].toUpperCase()),
     );
-    return CircleAvatar(
-      backgroundColor: userAvatarColor,
-      radius: radius,
-      child: user.profileImagePath == null
-          ? textIcon
-          : ClipRRect(
-              borderRadius: const BorderRadius.all(Radius.circular(50)),
-              child: CachedNetworkImage(
-                fit: BoxFit.cover,
-                cacheKey: user.profileImagePath,
-                width: size,
-                height: size,
-                placeholder: (_, __) => Image.memory(kTransparentImage),
-                imageUrl: profileImageUrl,
-                httpHeaders: ApiService.getRequestHeaders(),
-                fadeInDuration: const Duration(milliseconds: 300),
-                errorWidget: (context, error, stackTrace) => textIcon,
-              ),
-            ),
+    return Tooltip(
+      message: user.name,
+      child: Container(
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: hasBorder
+              ? Border.all(
+                  color: Colors.grey[400]!,
+                  width: 0.5,
+                )
+              : null,
+          boxShadow: hasShadow
+              ? [
+                  const BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 4.0,
+                    offset: Offset(0, 2),
+                  ),
+                ]
+              : null,
+        ),
+        child: CircleAvatar(
+          backgroundColor: userAvatarColor,
+          radius: radius,
+          child: user.profileImagePath == null
+              ? textIcon
+              : ClipRRect(
+                  borderRadius: const BorderRadius.all(Radius.circular(50)),
+                  child: CachedNetworkImage(
+                    fit: BoxFit.cover,
+                    cacheKey: user.profileImagePath,
+                    width: size,
+                    height: size,
+                    placeholder: (_, __) => Image.memory(kTransparentImage),
+                    imageUrl: profileImageUrl,
+                    httpHeaders: ApiService.getRequestHeaders(),
+                    fadeInDuration: const Duration(milliseconds: 300),
+                    errorWidget: (context, error, stackTrace) => textIcon,
+                  ),
+                ),
+        ),
+      ),
     );
   }
 }
